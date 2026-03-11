@@ -2,20 +2,39 @@ package com.banking.transactionservice.infrastructure.adapter.out.client;
 
 import com.banking.transactionservice.infrastructure.adapter.out.client.dto.AccountResponse;
 import com.banking.transactionservice.infrastructure.adapter.out.client.dto.DepositWithdrawRequest;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 
-@FeignClient(name = "account-service")
-public interface AccountClient {
+@Component
+public class AccountClient {
 
-    @GetMapping("/api/accounts/number/{accountNumber}")
-    AccountResponse getAccountByNumber(@PathVariable String accountNumber);
+    @Value("${services.account-service.url}")
+    private String accountServiceUrl;
 
-    @PostMapping("/api/accounts/number/{accountNumber}/deposit")
-    AccountResponse deposit(@PathVariable String accountNumber,
-                            @RequestBody DepositWithdrawRequest request);
+    public AccountResponse getAccountByNumber(String accountNumber) {
+        return RestClient.create()
+                .get()
+                .uri(accountServiceUrl + "/api/accounts/number/" + accountNumber)
+                .retrieve()
+                .body(AccountResponse.class);
+    }
 
-    @PostMapping("/api/accounts/number/{accountNumber}/withdraw")
-    AccountResponse withdraw(@PathVariable String accountNumber,
-                             @RequestBody DepositWithdrawRequest request);
+    public AccountResponse deposit(String accountNumber, DepositWithdrawRequest request) {
+        return RestClient.create()
+                .post()
+                .uri(accountServiceUrl + "/api/accounts/number/" + accountNumber + "/deposit")
+                .body(request)
+                .retrieve()
+                .body(AccountResponse.class);
+    }
+
+    public AccountResponse withdraw(String accountNumber, DepositWithdrawRequest request) {
+        return RestClient.create()
+                .post()
+                .uri(accountServiceUrl + "/api/accounts/number/" + accountNumber + "/withdraw")
+                .body(request)
+                .retrieve()
+                .body(AccountResponse.class);
+    }
 }
