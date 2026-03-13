@@ -15,15 +15,20 @@ public class TransactionEventPublisher {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     public void publishTransactionCompleted(Transaction transaction) {
-        String message = String.format(
-                "{\"reference\":\"%s\",\"source\":\"%s\",\"target\":\"%s\",\"amount\":%s,\"status\":\"%s\"}",
-                transaction.getTransactionReference(),
-                transaction.getSourceAccountNumber(),
-                transaction.getTargetAccountNumber(),
-                transaction.getAmount(),
-                transaction.getStatus()
-        );
-        kafkaTemplate.send(TOPIC, transaction.getTransactionReference(), message);
-        log.info("Transaction event published: {}", transaction.getTransactionReference());
+        try {
+            String message = String.format(
+                    "{\"reference\":\"%s\",\"source\":\"%s\",\"target\":\"%s\",\"amount\":%s,\"status\":\"%s\"}",
+                    transaction.getTransactionReference(),
+                    transaction.getSourceAccountNumber(),
+                    transaction.getTargetAccountNumber(),
+                    transaction.getAmount(),
+                    transaction.getStatus()
+            );
+            kafkaTemplate.send(TOPIC, transaction.getTransactionReference(), message);
+            log.info("Transaction event published: {}", transaction.getTransactionReference());
+        } catch (Exception e) {
+            // Kafka no está corriendo — la transferencia igual se completa
+            log.warn("Could not publish transaction event (Kafka unavailable): {}", e.getMessage());
+        }
     }
 }
